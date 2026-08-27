@@ -1,6 +1,7 @@
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Effects
+import QtMultimedia
 
 Item {
     id: root
@@ -13,6 +14,11 @@ Item {
     property int rootWidth
     property string greetingText
     property string username
+    
+    // Video Wallpaper Properties
+    property string bgSrc: config.backgroundSource ? "../" + config.backgroundSource : "../assets/background"
+    property bool isVideo: bgSrc.endsWith(".mp4") || bgSrc.endsWith(".webm") || bgSrc.endsWith(".mkv")
+
     readonly property var fontAxes: ({
         "wght": 700,
         "wdth": 115,
@@ -43,19 +49,38 @@ Item {
             anchors.centerIn: parent
             width: root.rootWidth
             height: root.rootHeight
-            source: "../assets/background"
+            source: root.bgSrc
             fillMode: Image.PreserveAspectCrop
+            visible: !root.isVideo
+            opacity: root.firstInput ? 1 : 0
+        }
+
+        MediaPlayer {
+            id: greetMediaPlayer
+            source: root.isVideo ? root.bgSrc : ""
+            videoOutput: greetVideoOutput
+            loops: MediaPlayer.Infinite
+            autoPlay: true
+        }
+
+        VideoOutput {
+            id: greetVideoOutput
+            anchors.centerIn: parent
+            width: root.rootWidth
+            height: root.rootHeight
+            visible: root.isVideo
+            fillMode: VideoOutput.PreserveAspectCrop
             opacity: root.firstInput ? 1 : 0
         }
 
         MultiEffect {
             blurEnabled: root.blurEnabled
-            source: backgroundBlur
+            source: root.isVideo ? greetVideoOutput : backgroundBlur
             blur: root.blurAmount
             autoPaddingEnabled: false
             blurMultiplier: 1
             blurMax: 64
-            anchors.fill: backgroundBlur
+            anchors.fill: root.isVideo ? greetVideoOutput : backgroundBlur
             opacity: root.firstInput ? 1 : 0
 
             Behavior on blur {
@@ -69,7 +94,7 @@ Item {
         }
 
         Rectangle {
-            anchors.fill: backgroundBlur
+            anchors.fill: root.isVideo ? greetVideoOutput : backgroundBlur
             color: Qt.rgba(parseInt(config.background.substring(1, 3), 16) / 255, parseInt(config.background.substring(3, 5), 16) / 255, parseInt(config.background.substring(5, 7), 16) / 255, root.welcomeBgOpacity)
             opacity: root.firstInput ? parseFloat(config.welcomeColorOpacity) : 0
         }
