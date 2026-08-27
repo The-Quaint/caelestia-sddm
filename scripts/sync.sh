@@ -158,12 +158,22 @@ fi
 
 # 4. Sync Wallpaper LAST
 WALLPAPER_SRC="$CAEL_STATE/wallpaper/current"
-WALLPAPER_DEST="$THEME_DIR/assets/background"
-MAX_WALLPAPER_BYTES=$((50 * 1024 * 1024))
+MAX_WALLPAPER_BYTES=$((250 * 1024 * 1024))
+
+mime_type=$(sudo -H -u "$REAL_USER" file -b --mime-type "$WALLPAPER_SRC" 2>/dev/null || echo "image/png")
+[[ "$mime_type" == video/* ]] && EXT="mp4" || EXT="png"
+WALLPAPER_DEST="$THEME_DIR/assets/background.$EXT"
 
 if copy_user_file "$WALLPAPER_SRC" "$WALLPAPER_DEST" "$MAX_WALLPAPER_BYTES"; then
-    rm -f -- "$THEME_DIR/assets/background."*
-    echo "✓ Synced background"
+    find "$THEME_DIR/assets/" -maxdepth 1 -type f -name "background.*" ! -name "background.$EXT" -delete
+    rm -f -- "$THEME_DIR/assets/background"
+    
+    if grep -q "^backgroundSource=" "$THEME_CONF_DEST"; then
+        sed -i "s|^backgroundSource=.*|backgroundSource=assets/background.$EXT|" "$THEME_CONF_DEST"
+    else
+        echo "backgroundSource=assets/background.$EXT" >> "$THEME_CONF_DEST"
+    fi
+    echo "✓ Synced background ($EXT)"
 else
     echo "No readable wallpaper found, leaving existing background unchanged."
 fi
