@@ -1,6 +1,7 @@
 import Qt5Compat.GraphicalEffects
 import QtQuick 2.15
 import QtQuick.Effects
+import QtMultimedia
 import "components"
 import "singletons"
 
@@ -16,6 +17,10 @@ Rectangle {
         }
         return "";
     }
+
+    // Video Wallpaper Properties
+    property string bgSrc: config.backgroundSource || Theme.backgroundSource
+    property bool isVideo: bgSrc.endsWith(".mp4") || bgSrc.endsWith(".webm") || bgSrc.endsWith(".mkv")
 
     function restoreFocus() {
         if (!keyHandler.activeFocus)
@@ -106,14 +111,10 @@ Rectangle {
 
     AnimatedImage {
         id: background
-
-        property string src: Theme.backgroundSource
-        property bool isVideo: src.endsWith(".mp4") || src.endsWith(".webm")
-
         anchors.fill: parent
-        source: background.src
+        source: root.bgSrc
         fillMode: Image.PreserveAspectCrop
-        visible: !background.isVideo
+        visible: !root.isVideo
 
         Rectangle {
             anchors.fill: parent
@@ -131,9 +132,36 @@ Rectangle {
 
     }
 
+    MediaPlayer {
+        id: bgMediaPlayer
+        source: root.isVideo ? root.bgSrc : ""
+        videoOutput: videoOutput
+        loops: MediaPlayer.Infinite
+        autoPlay: true
+    }
+
+    VideoOutput {
+        id: videoOutput
+        anchors.fill: parent
+        visible: root.isVideo
+        fillMode: VideoOutput.PreserveAspectCrop
+
+        Rectangle {
+            anchors.fill: parent
+            color: Theme.mShadow
+            opacity: firstInput ? 0 : Theme.overlayOpacity
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: Theme.enableWelcomeMessage ? Theme.animDurationNormal : 0
+                }
+            }
+        }
+    }
+
     MultiEffect {
-        source: background
-        anchors.fill: background
+        source: root.isVideo ? videoOutput : background
+        anchors.fill: parent
         blurEnabled: Theme.blurEnabled
         blur: firstInput ? 0 : Theme.blurStrength
         blurMax: 64
