@@ -49,6 +49,8 @@ DEPENDENCIES=(
   "qt6-declarative"
   "qt6-5compat"
   "qt6-svg"
+  "qt6-multimedia"
+  "qt6-multimedia-ffmpeg"
 )
 
 echo "Checking dependencies..."
