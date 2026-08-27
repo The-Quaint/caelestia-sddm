@@ -4,6 +4,7 @@ import QtQuick.Controls
 import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Window
+import QtMultimedia
 import "components"
 import "widgets"
 
@@ -38,6 +39,10 @@ Rectangle {
     property real midRadius: mainCard.radius / 1.4
     property real smallRadius: mainCard.radius / 2
 
+    // Video Wallpaper Properties
+    property string bgSrc: config.backgroundSource || "assets/background"
+    property bool isVideo: bgSrc.endsWith(".mp4") || bgSrc.endsWith(".webm") || bgSrc.endsWith(".mkv")
+
     width: 1920
     height: 1080
     color: "#131313"
@@ -60,14 +65,13 @@ Rectangle {
 
     AnimatedImage {
         id: background
-
         anchors.fill: parent
-        source: "assets/background"
+        source: root.bgSrc
         fillMode: Image.PreserveAspectCrop
+        visible: !root.isVideo
         onStatusChanged: {
             if (status === Image.Error)
                 console.log("Background missing, using fallback color");
-
         }
 
         Rectangle {
@@ -80,11 +84,36 @@ Rectangle {
                     duration: 300
                     easing: Easing.InOutCubic
                 }
-
             }
-
         }
+    }
 
+    MediaPlayer {
+        id: bgMediaPlayer
+        source: root.isVideo ? root.bgSrc : ""
+        videoOutput: videoOutput
+        loops: MediaPlayer.Infinite
+        autoPlay: true
+    }
+
+    VideoOutput {
+        id: videoOutput
+        anchors.fill: parent
+        visible: root.isVideo
+        fillMode: VideoOutput.PreserveAspectCrop
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#000000"
+            opacity: firstInput ? 0 : 0.4
+
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 300
+                    easing: Easing.InOutCubic
+                }
+            }
+        }
     }
 
     Item {
@@ -150,21 +179,19 @@ Rectangle {
 
     MultiEffect {
         blurEnabled: true
-        source: background
+        source: root.isVideo ? videoOutput : background
         blur: root.firstInput ? 0 : 1
         autoPaddingEnabled: false
         blurMultiplier: 1
         blurMax: 64
-        anchors.fill: background
+        anchors.fill: parent
 
         Behavior on blur {
             NumberAnimation {
                 duration: 400
                 easing: Easing.InOutCubic
             }
-
         }
-
     }
 
     Greeting {
