@@ -1,6 +1,7 @@
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Effects
+import QtMultimedia
 
 Item {
     id: blurCard
@@ -18,7 +19,10 @@ Item {
     property string bgColor: "#000000"
     property real colorOpacity: 1
     property bool visibleState: true
-    property url source: Qt.resolvedUrl("../assets/background")
+    
+    // Video Wallpaper Properties
+    property url source: config.backgroundSource ? Qt.resolvedUrl("../" + config.backgroundSource) : Qt.resolvedUrl("../assets/background")
+    property bool isVideo: source.toString().endsWith(".mp4") || source.toString().endsWith(".webm") || source.toString().endsWith(".mkv")
 
     function startAnimation() {
         widthAnim.start();
@@ -51,6 +55,7 @@ Item {
             height: 1080
             source: blurCard.source
             fillMode: Image.PreserveAspectCrop
+            visible: !blurCard.isVideo
             opacity: blurCard.visibleState ? 1 : 0
             onStatusChanged: {
                 if (status === Image.Error)
@@ -59,9 +64,27 @@ Item {
             }
         }
 
+        MediaPlayer {
+            id: blurMediaPlayer
+            source: blurCard.isVideo ? blurCard.source : ""
+            videoOutput: blurVideoOutput
+            loops: MediaPlayer.Infinite
+            autoPlay: true
+        }
+
+        VideoOutput {
+            id: blurVideoOutput
+            anchors.centerIn: parent
+            width: 1920
+            height: 1080
+            visible: blurCard.isVideo
+            fillMode: VideoOutput.PreserveAspectCrop
+            opacity: blurCard.visibleState ? 1 : 0
+        }
+
         MultiEffect {
-            anchors.fill: backgroundBlur
-            source: backgroundBlur
+            anchors.fill: blurCard.isVideo ? blurVideoOutput : backgroundBlur
+            source: blurCard.isVideo ? blurVideoOutput : backgroundBlur
             blurEnabled: blurCard.blurEnabled
             blur: blurCard.blurAmount
             blurMax: 64
@@ -80,7 +103,7 @@ Item {
         }
 
         Rectangle {
-            anchors.fill: backgroundBlur
+            anchors.fill: blurCard.isVideo ? blurVideoOutput : backgroundBlur
             color: Qt.rgba(parseInt(config.background.substring(1, 3), 16) / 255, parseInt(config.background.substring(3, 5), 16) / 255, parseInt(config.background.substring(5, 7), 16) / 255, 1)
             opacity: blurCard.visibleState ? parseFloat(config.mainCardColorOpacity) : 0
         }
