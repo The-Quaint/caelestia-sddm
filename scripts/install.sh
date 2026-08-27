@@ -51,6 +51,8 @@ DEPENDENCIES=(
   "qt6-svg"
   "qt6-multimedia"
   "qt6-multimedia-ffmpeg"
+  "qt6-multimedia-gstreamer"
+  "gst-plugins-good"
 )
 
 echo "Checking dependencies..."
