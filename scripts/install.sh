@@ -53,6 +53,7 @@ DEPENDENCIES=(
   "qt6-multimedia-ffmpeg"
   "qt6-multimedia-gstreamer"
   "gst-plugins-good"
+  "jq"
 )
 
 echo "Checking dependencies..."
