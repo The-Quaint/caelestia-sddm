@@ -88,12 +88,23 @@ Rectangle {
         }
     }
 
+    AudioOutput {
+        id: bgAudio
+        muted: true
+    }
+
     MediaPlayer {
         id: bgMediaPlayer
-        source: root.isVideo ? root.bgSrc : ""
+        source: root.isVideo ? Qt.resolvedUrl(root.bgSrc) : ""
         videoOutput: videoOutput
+        audioOutput: bgAudio
         loops: MediaPlayer.Infinite
-        autoPlay: true
+        
+        Component.onCompleted: {
+            if (root.isVideo) {
+                play()
+            }
+        }
     }
 
     VideoOutput {
