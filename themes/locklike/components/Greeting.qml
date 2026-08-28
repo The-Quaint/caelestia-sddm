@@ -55,12 +55,23 @@ Item {
             opacity: root.firstInput ? 1 : 0
         }
 
+        AudioOutput {
+            id: greetAudio
+            muted: true
+        }
+
         MediaPlayer {
             id: greetMediaPlayer
-            source: root.isVideo ? root.bgSrc : ""
+            source: root.isVideo ? Qt.resolvedUrl(root.bgSrc) : ""
             videoOutput: greetVideoOutput
+            audioOutput: greetAudio
             loops: MediaPlayer.Infinite
-            autoPlay: true
+            
+            Component.onCompleted: {
+                if (root.isVideo) {
+                    play()
+                }
+            }
         }
 
         VideoOutput {
