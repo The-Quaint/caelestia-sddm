@@ -23,6 +23,7 @@ depends=(
   'qt6-multimedia-ffmpeg'
   'qt6-multimedia-gstreamer'
   'gst-plugins-good'
+  'jq'
   'ttf-rubik-vf'
   'ttf-material-symbols-variable'
   'ttf-roboto'
