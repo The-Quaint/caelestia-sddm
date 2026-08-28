@@ -160,12 +160,18 @@ fi
 WALLPAPER_SRC="$CAEL_STATE/wallpaper/current"
 MAX_WALLPAPER_BYTES=$((250 * 1024 * 1024))
 
-mime_type=$(sudo -H -u "$REAL_USER" file -b --mime-type "$WALLPAPER_SRC" 2>/dev/null || echo "image/png")
-[[ "$mime_type" == video/* ]] && EXT="mp4" || EXT="png"
+# The -L flag forces 'file' to read the actual video target, not the symlink
+mime_type=$(sudo -H -u "$REAL_USER" file -b -L --mime-type "$WALLPAPER_SRC" 2>/dev/null || echo "image/png")
+if [[ "$mime_type" == video/* ]]; then
+    EXT="mp4"
+else
+    EXT="png"
+fi
+
 WALLPAPER_DEST="$THEME_DIR/assets/background.$EXT"
 
 if copy_user_file "$WALLPAPER_SRC" "$WALLPAPER_DEST" "$MAX_WALLPAPER_BYTES"; then
-    find "$THEME_DIR/assets/" -maxdepth 1 -type f -name "background.*" ! -name "background.$EXT" -delete
+    find "$THEME_DIR/assets/" -maxdepth 1 -type f -name "background.*" ! -name "background.$EXT" -delete 2>/dev/null || true
     rm -f -- "$THEME_DIR/assets/background"
     
     if grep -q "^backgroundSource=" "$THEME_CONF_DEST"; then
