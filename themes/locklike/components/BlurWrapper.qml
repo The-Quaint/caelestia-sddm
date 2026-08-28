@@ -1,7 +1,6 @@
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Effects
-import QtMultimedia
 
 Item {
     id: blurCard
@@ -20,9 +19,8 @@ Item {
     property real colorOpacity: 1
     property bool visibleState: true
     
-    // Video Wallpaper Properties
-    property url source: config.backgroundSource ? Qt.resolvedUrl("../" + config.backgroundSource) : Qt.resolvedUrl("../assets/background")
-    property bool isVideo: source.toString().endsWith(".mp4") || source.toString().endsWith(".webm") || source.toString().endsWith(".mkv")
+    // New property to receive the master background
+    property Item bgItem: null
 
     function startAnimation() {
         widthAnim.start();
@@ -47,55 +45,19 @@ Item {
         clip: true
         layer.enabled: true
 
-        AnimatedImage {
-            id: backgroundBlur
-
+        ShaderEffectSource {
+            id: sharedBackground
             anchors.centerIn: parent
             width: 1920
             height: 1080
-            source: blurCard.source
-            fillMode: Image.PreserveAspectCrop
-            visible: !blurCard.isVideo
-            opacity: blurCard.visibleState ? 1 : 0
-            onStatusChanged: {
-                if (status === Image.Error)
-                    console.log("Background missing, using fallback color");
-
-            }
-        }
-
-        AudioOutput {
-            id: blurAudio
-            muted: true
-        }
-
-        MediaPlayer {
-            id: blurMediaPlayer
-            source: blurCard.isVideo ? blurCard.source : ""
-            videoOutput: blurVideoOutput
-            audioOutput: blurAudio
-            loops: MediaPlayer.Infinite
-            
-            Component.onCompleted: {
-                if (blurCard.isVideo) {
-                    play()
-                }
-            }
-        }
-
-        VideoOutput {
-            id: blurVideoOutput
-            anchors.centerIn: parent
-            width: 1920
-            height: 1080
-            visible: blurCard.isVideo
-            fillMode: VideoOutput.PreserveAspectCrop
-            opacity: blurCard.visibleState ? 1 : 0
+            sourceItem: blurCard.bgItem
+            sourceRect: Qt.rect(0, 0, 1920, 1080)
+            visible: false // Hidden so MultiEffect can use it natively
         }
 
         MultiEffect {
-            anchors.fill: blurCard.isVideo ? blurVideoOutput : backgroundBlur
-            source: blurCard.isVideo ? blurVideoOutput : backgroundBlur
+            anchors.fill: sharedBackground
+            source: sharedBackground
             blurEnabled: blurCard.blurEnabled
             blur: blurCard.blurAmount
             blurMax: 64
@@ -108,39 +70,32 @@ Item {
                     duration: blurCard.animDuration
                     easing.type: Easing.InOutCubic
                 }
-
             }
-
         }
 
         Rectangle {
-            anchors.fill: blurCard.isVideo ? blurVideoOutput : backgroundBlur
+            anchors.fill: sharedBackground
             color: Qt.rgba(parseInt(config.background.substring(1, 3), 16) / 255, parseInt(config.background.substring(3, 5), 16) / 255, parseInt(config.background.substring(5, 7), 16) / 255, 1)
             opacity: blurCard.visibleState ? parseFloat(config.mainCardColorOpacity) : 0
         }
 
         layer.effect: OpacityMask {
-
             maskSource: Rectangle {
                 width: rootRect.width
                 height: rootRect.height
                 radius: rootRect.radius
             }
-
         }
 
         Behavior on opacity {
             NumberAnimation {
                 duration: blurCard.animDurationOpacity
             }
-
         }
-
     }
 
     PropertyAnimation {
         id: widthAnim
-
         target: rootRect
         property: "width"
         from: blurCard.startWidth
@@ -151,7 +106,6 @@ Item {
 
     PropertyAnimation {
         id: heightAnim
-
         target: rootRect
         property: "height"
         from: blurCard.startHeight
@@ -159,5 +113,4 @@ Item {
         duration: blurCard.animDuration
         easing.type: Easing.OutBack
     }
-
 }
