@@ -64,12 +64,23 @@ Item {
             }
         }
 
+        AudioOutput {
+            id: blurAudio
+            muted: true
+        }
+
         MediaPlayer {
             id: blurMediaPlayer
             source: blurCard.isVideo ? blurCard.source : ""
             videoOutput: blurVideoOutput
+            audioOutput: blurAudio
             loops: MediaPlayer.Infinite
-            autoPlay: true
+            
+            Component.onCompleted: {
+                if (blurCard.isVideo) {
+                    play()
+                }
+            }
         }
 
         VideoOutput {
