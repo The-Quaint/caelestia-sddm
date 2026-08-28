@@ -1,7 +1,6 @@
 import Qt5Compat.GraphicalEffects
 import QtQuick
 import QtQuick.Effects
-import QtMultimedia
 
 Item {
     id: root
@@ -15,9 +14,8 @@ Item {
     property string greetingText
     property string username
     
-    // Video Wallpaper Properties
-    property string bgSrc: config.backgroundSource ? "../" + config.backgroundSource : "../assets/background"
-    property bool isVideo: bgSrc.endsWith(".mp4") || bgSrc.endsWith(".webm") || bgSrc.endsWith(".mkv")
+    // New property to receive the master background
+    property Item bgItem: null
 
     readonly property var fontAxes: ({
         "wght": 700,
@@ -28,7 +26,6 @@ Item {
 
     FontLoader {
         id: googleSansFlex
-
         source: "../assets/google-sans-flex/GoogleSansFlex.ttf"
     }
 
@@ -43,55 +40,24 @@ Item {
         clip: true
         layer.enabled: true
 
-        AnimatedImage {
-            id: backgroundBlur
-
+        ShaderEffectSource {
+            id: sharedBackground
             anchors.centerIn: parent
             width: root.rootWidth
             height: root.rootHeight
-            source: root.bgSrc
-            fillMode: Image.PreserveAspectCrop
-            visible: !root.isVideo
-            opacity: root.firstInput ? 1 : 0
-        }
-
-        AudioOutput {
-            id: greetAudio
-            muted: true
-        }
-
-        MediaPlayer {
-            id: greetMediaPlayer
-            source: root.isVideo ? Qt.resolvedUrl(root.bgSrc) : ""
-            videoOutput: greetVideoOutput
-            audioOutput: greetAudio
-            loops: MediaPlayer.Infinite
-            
-            Component.onCompleted: {
-                if (root.isVideo) {
-                    play()
-                }
-            }
-        }
-
-        VideoOutput {
-            id: greetVideoOutput
-            anchors.centerIn: parent
-            width: root.rootWidth
-            height: root.rootHeight
-            visible: root.isVideo
-            fillMode: VideoOutput.PreserveAspectCrop
-            opacity: root.firstInput ? 1 : 0
+            sourceItem: root.bgItem
+            sourceRect: Qt.rect(0, 0, root.rootWidth, root.rootHeight)
+            visible: false 
         }
 
         MultiEffect {
             blurEnabled: root.blurEnabled
-            source: root.isVideo ? greetVideoOutput : backgroundBlur
+            source: sharedBackground
             blur: root.blurAmount
             autoPaddingEnabled: false
             blurMultiplier: 1
             blurMax: 64
-            anchors.fill: root.isVideo ? greetVideoOutput : backgroundBlur
+            anchors.fill: sharedBackground
             opacity: root.firstInput ? 1 : 0
 
             Behavior on blur {
@@ -99,13 +65,11 @@ Item {
                     duration: 400
                     easing: Easing.InOutCubic
                 }
-
             }
-
         }
 
         Rectangle {
-            anchors.fill: root.isVideo ? greetVideoOutput : backgroundBlur
+            anchors.fill: sharedBackground
             color: Qt.rgba(parseInt(config.background.substring(1, 3), 16) / 255, parseInt(config.background.substring(3, 5), 16) / 255, parseInt(config.background.substring(5, 7), 16) / 255, root.welcomeBgOpacity)
             opacity: root.firstInput ? parseFloat(config.welcomeColorOpacity) : 0
         }
@@ -115,7 +79,6 @@ Item {
                 duration: 600
                 easing.type: Easing.OutBack
             }
-
         }
 
         Behavior on height {
@@ -123,19 +86,15 @@ Item {
                 duration: 600
                 easing.type: Easing.OutBack
             }
-
         }
 
         layer.effect: OpacityMask {
-
             maskSource: Rectangle {
                 width: welcomeTextRectBlur.width
                 height: welcomeTextRectBlur.height
                 radius: welcomeTextRectBlur.radius
             }
-
         }
-
     }
 
     Item {
@@ -155,9 +114,7 @@ Item {
             font.pointSize: 80
             font.family: googleSansFlex.name
             font.variableAxes: root.fontAxes
-            font.features: ({
-                "liga": 0
-            })
+            font.features: ({ "liga": 0 })
             color: config.text
             opacity: root.firstInput ? 1 : 0
             anchors.centerIn: parent
@@ -172,7 +129,5 @@ Item {
             easing.type: Easing.OutBack
             running: root.firstInput ? true : false
         }
-
     }
-
 }
