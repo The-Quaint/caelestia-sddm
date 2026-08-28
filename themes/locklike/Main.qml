@@ -215,6 +215,8 @@ Rectangle {
         username: userPicker.currentText
         blurAmount: root.welcomeBgBlurAmount
         blurEnabled: root.welcomeBgBlur
+        
+        bgItem: root.isVideo ? videoOutput : background // <--- ADD THIS LINE
     }
 
     Rectangle {
@@ -247,6 +249,8 @@ Rectangle {
             bgColor: config.mainCard
             visibleState: !root.firstInput
             radius: 50
+            
+            bgItem: root.isVideo ? videoOutput : background // <--- ADD THIS LINE
         }
 
         MainClock {
